@@ -7,7 +7,7 @@ import firebaseConfig from './simple-auth-v2-config';
 
 firebase.initializeApp(firebaseConfig);
 function App() {
-
+  const [newUser,setNewUser] = useState(false);
   const [user,setUser] = useState({
     isSignedIn: false,
     name: '',
@@ -42,7 +42,7 @@ function App() {
 
   const handelSubmit = (e) => {
     console.log(user.email,user.password);
-      if(user.email && user.password){
+      if(newUser && user.email && user.password){
           firebase.auth().createUserWithEmailAndPassword(user.email,user.password)
           .then((res) => {
             const newUserInfo = {...user}
@@ -61,6 +61,21 @@ function App() {
             // console.log(errorCode,errorMessage);
           });
       }
+      if(!newUser && user.email && user.password){
+        firebase.auth().signInWithEmailAndPassword(user.email, user.password)
+        .then(res => {
+          const newUserInfo = {...user}
+          newUserInfo.error = '';
+          newUserInfo.success = true;
+          setUser(newUserInfo);
+        })
+        .catch(error => {
+          const newUserInfo = {...user}
+          newUserInfo.error = error.message;
+          newUserInfo.success = false;
+          setUser(newUserInfo);
+        })
+      }
       e.preventDefault();
   }
   return (
@@ -69,8 +84,10 @@ function App() {
       <p>Name: {user.name}</p>
       <p>Email : {user.email}</p>
       <p>Password : {user.password}</p>
+      <input type="checkbox" onChange={ () => setNewUser(!newUser)} name="newUser" id=""/>
+      <label htmlFor="newUser">New User Sign up</label>
       <form onSubmit={handelSubmit}>
-        <input type="text" name="name" placeholder="Your Name" onBlur={handelBlur} required/>
+        {newUser &&  <input type="text" name="name" placeholder="Your Name" onBlur={handelBlur} required/> } 
         <br/>
         <input type="text" name="email" placeholder="Your Email Address" required onBlur={handelBlur} />
         <br />
@@ -79,7 +96,7 @@ function App() {
         <input type="submit" value="Submit"/>
       </form>
       <p style={{color : 'red'}}>{user.error}</p>
-      {user.success && <p style={{color:'green'}}>User Created Successfully</p>}
+      {user.success && <p style={{color:'green'}}>User {newUser ? 'Created' : 'Logged in'} Successfully</p>}
     </div>
   );
 }
