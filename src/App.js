@@ -18,6 +18,36 @@ function App() {
     success: false
   })
 
+  const provider = new firebase.auth.FacebookAuthProvider();
+
+  const handelFbSignIn = () => {
+  firebase
+  .auth()
+  .signInWithPopup(provider)
+  .then((result) => {
+   
+    var credential = result.credential;
+
+   
+    var user = result.user;
+
+    
+    var accessToken = credential.accessToken;
+
+    console.log('after sign in facebook',user);
+  })
+  .catch((error) => {
+    
+    var errorCode = error.code;
+    var errorMessage = error.message;
+   
+    var email = error.email;
+    
+    var credential = error.credential;
+
+  });
+  }
+
   const handelBlur = (e) => {
     let isFieldValid = true;
     if(e.target.name === "email"){
@@ -35,13 +65,13 @@ function App() {
       const newUserInfo = {...user}
       newUserInfo[e.target.name] = e.target.value;
       setUser(newUserInfo);
-      console.log(user);
+     // console.log(user);
 
     }
   } 
 
   const handelSubmit = (e) => {
-    console.log(user.email,user.password);
+   // console.log(user.email,user.password);
       if(newUser && user.email && user.password){
           firebase.auth().createUserWithEmailAndPassword(user.email,user.password)
           .then((res) => {
@@ -49,6 +79,7 @@ function App() {
             newUserInfo.error = '';
             newUserInfo.success = true;
             setUser(newUserInfo);
+            //console.log('sign in user info',res.user);
           
           })
           .catch((error) => {
@@ -68,6 +99,7 @@ function App() {
           newUserInfo.error = '';
           newUserInfo.success = true;
           setUser(newUserInfo);
+          updateUserName(user.name);
         })
         .catch(error => {
           const newUserInfo = {...user}
@@ -78,8 +110,25 @@ function App() {
       }
       e.preventDefault();
   }
+
+  const updateUserName = name => {
+    const user = firebase.auth().currentUser;
+    
+    console.log(user);
+
+    user.updateProfile({
+      displayName: name,
+    }).then(function() {
+      console.log('username updated successfully')
+    }).catch(function(error) {
+      console.log(error)
+    });
+  }
+
   return (
     <div className="App">
+      <button onClick={handelFbSignIn}>Sign in using Facebook</button>
+
       <h1>Our own Authentication</h1>
       <p>Name: {user.name}</p>
       <p>Email : {user.email}</p>
@@ -93,7 +142,7 @@ function App() {
         <br />
         <input type="password" name="password" id="" placeholder="Your Password" required onBlur={handelBlur} />
         <br />
-        <input type="submit" value="Submit"/>
+        <input type="submit" value={newUser ? 'Sign up' : 'Sign in'}/>
       </form>
       <p style={{color : 'red'}}>{user.error}</p>
       {user.success && <p style={{color:'green'}}>User {newUser ? 'Created' : 'Logged in'} Successfully</p>}
